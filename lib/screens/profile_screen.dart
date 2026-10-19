@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:zumbee_app/components/zumbee_app_bar.dart';
+import 'package:zumbee_app/core/app_state.dart';
 import 'package:zumbee_app/core/mycolors.dart';
 import 'package:zumbee_app/core/mytextstyles.dart';
+import 'package:zumbee_app/screens/edit_profile.dart';
 import 'package:zumbee_app/services/auth_service.dart';
 import 'package:zumbee_app/services/database_service.dart';
 
@@ -29,6 +31,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final userProfile = await DatabaseService().getUserProfile();
       final userHives = await DatabaseService().getHives();
       if (!mounted) return;
+
+      final apiary = userProfile?['apiaryName']?.toString();
+      if (apiary != null && apiary.isNotEmpty) {
+        AppState.apiaryName.value = apiary;
+      }
+
       setState(() {
         profile = userProfile;
         hives = userHives;
@@ -284,7 +292,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         topLeft: Radius.circular(16),
                         topRight: Radius.circular(16),
                       ),
-                      onTap: () {},
+                      onTap: profile == null
+                          ? null
+                          : () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      EditProfile(profile: profile!),
+                                ),
+                              );
+                              loadData();
+                            },
                       trailing: Icon(
                         Icons.chevron_right,
                         color: MyColors.secondaryText,

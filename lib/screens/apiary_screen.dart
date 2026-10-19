@@ -16,18 +16,18 @@ class ApiaryScreen extends StatefulWidget {
 }
 
 class _ApiaryScreenState extends State<ApiaryScreen> {
-  String apiaryName = "Mi apiario";
-
   @override
   void initState() {
     super.initState();
     AppState.selectedHive.addListener(onSelectionChanged);
+    AppState.apiaryName.addListener(onSelectionChanged);
     loadApiaryName();
   }
 
   @override
   void dispose() {
     AppState.selectedHive.removeListener(onSelectionChanged);
+    AppState.apiaryName.removeListener(onSelectionChanged);
     super.dispose();
   }
 
@@ -40,9 +40,10 @@ class _ApiaryScreenState extends State<ApiaryScreen> {
     try {
       final profile = await DatabaseService().getUserProfile();
       if (!mounted || profile == null) return;
-      setState(() {
-        apiaryName = profile['apiaryName']?.toString() ?? "Mi apiario";
-      });
+      final apiary = profile['apiaryName']?.toString();
+      if (apiary != null && apiary.isNotEmpty) {
+        AppState.apiaryName.value = apiary;
+      }
     } catch (error) {
       return;
     }
@@ -151,7 +152,7 @@ class _ApiaryScreenState extends State<ApiaryScreen> {
                           style: MyTextStyles.bodySmallDark,
                         ),
                         Text(
-                          apiaryName,
+                          AppState.apiaryName.value,
                           style: MyTextStyles.subtitleDark,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

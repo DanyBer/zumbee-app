@@ -6,6 +6,10 @@ class AppState {
   static final ValueNotifier<Map<String, dynamic>?> selectedHive =
       ValueNotifier<Map<String, dynamic>?>(null);
 
+  static final ValueNotifier<String> apiaryName = ValueNotifier<String>(
+    "Mi apiario",
+  );
+
   static void select(Map<String, dynamic>? hive) {
     selectedHive.value = hive;
   }

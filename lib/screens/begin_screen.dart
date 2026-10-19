@@ -23,12 +23,11 @@ class _BeginScreenState extends State<BeginScreen> {
   bool hasConnectionError = false;
   Timer? refreshTimer;
 
-  String apiaryName = "Mi apiario";
-
   @override
   void initState() {
     super.initState();
     AppState.selectedHive.addListener(onHiveChanged);
+    AppState.apiaryName.addListener(onApiaryChanged);
     loadData();
     loadApiaryName();
     refreshTimer = Timer.periodic(
@@ -40,6 +39,7 @@ class _BeginScreenState extends State<BeginScreen> {
   @override
   void dispose() {
     AppState.selectedHive.removeListener(onHiveChanged);
+    AppState.apiaryName.removeListener(onApiaryChanged);
     refreshTimer?.cancel();
     super.dispose();
   }
@@ -53,13 +53,19 @@ class _BeginScreenState extends State<BeginScreen> {
     loadData();
   }
 
+  void onApiaryChanged() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
   Future<void> loadApiaryName() async {
     try {
       final profile = await DatabaseService().getUserProfile();
       if (!mounted || profile == null) return;
-      setState(() {
-        apiaryName = profile['apiaryName']?.toString() ?? "Mi apiario";
-      });
+      final apiary = profile['apiaryName']?.toString();
+      if (apiary != null && apiary.isNotEmpty) {
+        AppState.apiaryName.value = apiary;
+      }
     } catch (error) {
       return;
     }
@@ -157,7 +163,7 @@ class _BeginScreenState extends State<BeginScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    apiaryName,
+                                    AppState.apiaryName.value,
                                     style: MyTextStyles.subtitleDark,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
