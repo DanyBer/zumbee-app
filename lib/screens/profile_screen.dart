@@ -7,6 +7,7 @@ import 'package:zumbee_app/core/mytextstyles.dart';
 import 'package:zumbee_app/screens/edit_profile.dart';
 import 'package:zumbee_app/services/auth_service.dart';
 import 'package:zumbee_app/services/database_service.dart';
+import 'package:zumbee_app/services/push_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,6 +20,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? profile;
   List<Map<String, dynamic>> hives = [];
   bool isLoading = true;
+  bool alertsOn = true;
 
   @override
   void initState() {
@@ -30,6 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final userProfile = await DatabaseService().getUserProfile();
       final userHives = await DatabaseService().getHives();
+      final pushOn = await PushService.isEnabled();
       if (!mounted) return;
 
       final apiary = userProfile?['apiaryName']?.toString();
@@ -40,11 +43,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         profile = userProfile;
         hives = userHives;
+        alertsOn = pushOn;
         isLoading = false;
       });
     } catch (error) {
       if (!mounted) return;
       setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> onToggleAlerts(bool value) async {
+    setState(() => alertsOn = value);
+    final ok = await PushService.setEnabled(value, AppState.nodeId);
+    if (!mounted) return;
+    if (!ok) {
+      setState(() => alertsOn = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Android no dio permiso. Actívalo en Ajustes > Apps > Zum-Bee > Notificaciones."),
+      ));
     }
   }
 
@@ -320,26 +336,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
 
                     buildRow(
-                      label: "Conectar con el nodo",
+                      label: "Recibir alertas",
                       radius: BorderRadius.only(
                         bottomLeft: Radius.circular(16),
                         bottomRight: Radius.circular(16),
                       ),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: MyColors.primarySoft,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          "FASE 3",
-                          style: MyTextStyles.chip.copyWith(
-                            color: MyColors.primaryStrong,
-                          ),
-                        ),
+                      trailing: Switch(
+                        value: alertsOn,
+                        activeTrackColor: MyColors.primary,
+                        onChanged: onToggleAlerts,
                       ),
                     ),
 

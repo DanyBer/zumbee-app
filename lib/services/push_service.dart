@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Notificaciones push (Firebase Cloud Messaging).
 /// La Raspberry manda cada aviso al "tema" zumbee_NODO (ej. zumbee_ZB_01).

@@ -7,6 +7,7 @@ import 'package:zumbee_app/screens/apiary_screen.dart';
 import 'package:zumbee_app/screens/begin_screen.dart';
 import 'package:zumbee_app/screens/history_screen.dart';
 import 'package:zumbee_app/services/database_service.dart';
+import 'package:zumbee_app/services/push_service.dart';
 
 class MainScreens extends StatefulWidget {
   const MainScreens({super.key});
@@ -28,7 +29,20 @@ class _MainScreensState extends State<MainScreens> {
   @override
   void initState() {
     super.initState();
+    AppState.selectedHive.addListener(syncPush);
+    PushService.listenForeground();
     selectInitialHive();
+    syncPush();
+  }
+
+  @override
+  void dispose() {
+    AppState.selectedHive.removeListener(syncPush);
+    super.dispose();
+  }
+
+  void syncPush() {
+    PushService.sync(AppState.nodeId);
   }
 
   Future<void> selectInitialHive() async {

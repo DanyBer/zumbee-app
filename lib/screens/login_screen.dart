@@ -54,6 +54,74 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  // ¿Olvidaste tu contraseña? → Firebase manda un correo para crear una nueva
+  Future<void> _onForgotPassword() async {
+    final emailController = TextEditingController(text: _emailController.text.trim());
+    final email = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: MyColors.surface,
+        title: Text("Recuperar contraseña", style: MyTextStyles.subtitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.",
+              style: MyTextStyles.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              autofocus: true,
+              style: MyTextStyles.body,
+              decoration: InputDecoration(
+                hintText: "Introduce tu email",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancelar", style: MyTextStyles.bodySmall),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, emailController.text.trim()),
+            child: Text("Enviar", style: MyTextStyles.link),
+          ),
+        ],
+      ),
+    );
+    if (email == null || !mounted) return;
+    if (email.isEmpty) {
+      setState(() => errorMessage = "Escribe tu correo para recuperar la contraseña");
+      return;
+    }
+
+    final error = await _authService.sendPasswordReset(email);
+    if (!mounted) return;
+    if (error != null) {
+      setState(() => errorMessage = error);
+      return;
+    }
+    setState(() => errorMessage = null);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: MyColors.healthyStrong,
+        content: Text(
+          "Te enviamos un correo a $email para cambiar tu contraseña. Revisa también la carpeta de spam.",
+          style: MyTextStyles.bodySmall.copyWith(color: MyColors.primaryTextOnDark),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,6 +212,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: isLoading ? null : _onForgotPassword,
+                  child: Text("¿Olvidaste tu contraseña?", style: MyTextStyles.link),
                 ),
               ),
 

@@ -7,6 +7,8 @@ import 'package:zumbee_app/core/app_state.dart';
 import 'package:zumbee_app/core/mycolors.dart';
 import 'package:zumbee_app/core/mytextstyles.dart';
 import 'package:zumbee_app/services/alert_service.dart';
+import 'package:zumbee_app/services/node_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:zumbee_app/services/thingspeak_service.dart';
 
 class AlertsScreen extends StatefulWidget {
@@ -153,6 +155,13 @@ class _AlertsScreenState extends State<AlertsScreen> {
                           time: formatTime(alert['date']),
                         ),
 
+                    if (AppState.nodeId != null) ...[
+                      SizedBox(height: 20),
+                      Text("AVISOS DEL NODO", style: MyTextStyles.label),
+                      SizedBox(height: 8),
+                      buildNodeAlerts(AppState.nodeId!),
+                    ],
+
                     SizedBox(height: 20),
                     Container(
                       width: double.infinity,
@@ -195,6 +204,35 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 ),
               ),
             ),
+    );
+  }
+
+  // Avisos que guarda la Raspberry en nodes/{nodo}/alertas (semáforo, sonido, eventos)
+  Widget buildNodeAlerts(String nodeId) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: NodeService(nodeId).alertsStream(),
+      builder: (context, snapshot) {
+        final items = snapshot.data ?? [];
+        if (items.isEmpty) {
+          return Text(
+            "Todavía no hay avisos del nodo.",
+            style: MyTextStyles.bodySmall,
+          );
+        }
+        return Column(
+          children: [
+            for (final item in items)
+              AlertCard(
+                severity: item['semaforo'] == 3 ? 'critical' : 'warning',
+                title: "Aviso del nodo",
+                body: item['texto']?.toString() ?? "",
+                time: item['creada'] is Timestamp
+                    ? formatTime((item['creada'] as Timestamp).toDate())
+                    : "",
+              ),
+          ],
+        );
+      },
     );
   }
 

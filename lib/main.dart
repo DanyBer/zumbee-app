@@ -6,6 +6,7 @@ import 'package:zumbee_app/firebase_options.dart';
 import 'package:zumbee_app/screens/main_screens.dart';
 import 'package:zumbee_app/screens/welcome_screen.dart';
 import 'package:zumbee_app/services/auth_service.dart';
+import 'package:zumbee_app/services/push_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,8 +21,9 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'Zum-Bee',
+      scaffoldMessengerKey: PushService.messengerKey,
       debugShowCheckedModeBanner: false,
       home: AuthGate(),
     );

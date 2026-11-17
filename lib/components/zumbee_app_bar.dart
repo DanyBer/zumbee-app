@@ -15,7 +15,7 @@ class ZumbeeAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: MyColors.primary,
+      backgroundColor: MyColors.background,
       scrolledUnderElevation: 0,
       elevation: 0,
       shadowColor: Colors.transparent,

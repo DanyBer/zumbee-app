@@ -1,13 +1,15 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
-import 'package:zumbee_app/components/Metric_Gauge.dart';
+import 'package:zumbee_app/components/metric_gauge.dart';
+import 'package:zumbee_app/components/analytics_card.dart';
 import 'package:zumbee_app/components/zumbee_app_bar.dart';
 import 'package:zumbee_app/core/app_state.dart';
 import 'package:zumbee_app/core/mycolors.dart';
 import 'package:zumbee_app/core/mytextstyles.dart';
 import 'package:zumbee_app/screens/apiary_screen.dart';
 import 'package:zumbee_app/services/database_service.dart';
+import 'package:zumbee_app/services/node_service.dart';
 import 'package:zumbee_app/services/thingspeak_service.dart';
 
 class BeginScreen extends StatefulWidget {
@@ -104,6 +106,29 @@ class _BeginScreenState extends State<BeginScreen> {
   Future<void> refreshAll() async {
     await loadData();
     await loadApiaryName();
+  }
+
+  Future<void> sendThermal(String action) async {
+    final nodeId = AppState.nodeId;
+    final messenger = ScaffoldMessenger.of(context);
+    if (nodeId == null) {
+      messenger.showSnackBar(const SnackBar(
+        content: Text("Esta colmena no tiene identificador de nodo"),
+      ));
+      return;
+    }
+    try {
+      await NodeService(nodeId).sendCommand(action);
+      messenger.showSnackBar(SnackBar(
+        content: Text(action == 'calentar'
+            ? "Orden enviada: calentar por 20 minutos"
+            : "Orden enviada: enfriar por 20 minutos"),
+      ));
+    } catch (error) {
+      messenger.showSnackBar(const SnackBar(
+        content: Text("No se pudo enviar la orden. Revisa tu conexión."),
+      ));
+    }
   }
 
   @override
@@ -304,6 +329,11 @@ class _BeginScreenState extends State<BeginScreen> {
                       ),
                     ),
 
+                    if (AppState.nodeId != null) ...[
+                      SizedBox(height: 20),
+                      AnalyticsCard(nodeId: AppState.nodeId!),
+                    ],
+
                     SizedBox(height: 20),
 
                     Container(
@@ -350,7 +380,7 @@ class _BeginScreenState extends State<BeginScreen> {
                                         ),
                                       ),
                                     ),
-                                    onPressed: () {},
+                                    onPressed: () => sendThermal('calentar'),
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -390,7 +420,7 @@ class _BeginScreenState extends State<BeginScreen> {
                                         ),
                                       ),
                                     ),
-                                    onPressed: () {},
+                                    onPressed: () => sendThermal('enfriar'),
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
