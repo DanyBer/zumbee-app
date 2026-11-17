@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:zumbee_app/core/mycolors.dart';
 import 'package:zumbee_app/core/mytextstyles.dart';
 import 'package:zumbee_app/screens/profile_screen.dart';
@@ -15,7 +15,7 @@ class ZumbeeAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: MyColors.background,
+      backgroundColor: MyColors.primary,
       scrolledUnderElevation: 0,
       elevation: 0,
       shadowColor: Colors.transparent,

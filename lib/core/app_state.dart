@@ -29,4 +29,10 @@ class AppState {
     if (channel == null || channel.isEmpty) return null;
     return channel;
   }
+
+  static String? get nodeId {
+    final node = selectedHive.value?['nodeIdentifier']?.toString().trim();
+    if (node == null || node.isEmpty) return null;
+    return node;
+  }
 }
