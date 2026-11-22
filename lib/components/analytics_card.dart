@@ -152,7 +152,12 @@ class AnalyticsCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               if (model.isEmpty)
-                Text("Sin audio todavía", style: MyTextStyles.bodySmall)
+                Text(
+                  analytics['audio'] == 'sin_zumbido'
+                      ? "No se detecta zumbido de abejas"
+                      : "Sin audio todavía",
+                  style: MyTextStyles.bodySmall,
+                )
               else ...[
                 Text(
                   "${model['clase_texto']} · ${((number(model['confianza']) ?? 0) * 100).round()} %",

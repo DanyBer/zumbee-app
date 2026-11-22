@@ -17,14 +17,24 @@ class NodeService {
     return _doc.snapshots().map((snapshot) => snapshot.data());
   }
 
-  /// Últimos avisos que mandó la Raspberry, del más nuevo al más viejo.
-  Stream<List<Map<String, dynamic>>> alertsStream({int limit = 15}) {
+  /// Avisos que mandó la Raspberry en los últimos [days] días, del más nuevo
+  /// al más viejo. Cada aviso trae su 'id' para poder borrarlo.
+  Stream<List<Map<String, dynamic>>> alertsStream({int days = 7, int limit = 50}) {
+    final desde = DateTime.now().subtract(Duration(days: days));
     return _doc
         .collection('alertas')
+        .where('creada', isGreaterThan: Timestamp.fromDate(desde))
         .orderBy('creada', descending: true)
         .limit(limit)
         .snapshots()
-        .map((query) => query.docs.map((doc) => doc.data()).toList());
+        .map((query) => query.docs
+            .map((doc) => {...doc.data(), 'id': doc.id})
+            .toList());
+  }
+
+  /// Borra un aviso (cuando el usuario lo desliza).
+  Future<void> deleteAlert(String id) async {
+    await _doc.collection('alertas').doc(id).delete();
   }
 
   /// Manda una orden: 'calentar', 'enfriar' o 'parar'.

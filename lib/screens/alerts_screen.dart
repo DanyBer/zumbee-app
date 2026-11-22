@@ -20,6 +20,9 @@ class AlertsScreen extends StatefulWidget {
 
 class _AlertsScreenState extends State<AlertsScreen> {
   List<Map<String, dynamic>> alerts = [];
+  // Avisos que el usuario ya deslizó (se esconden enseguida, antes de que
+  // Firebase confirme el borrado, para que la lista no "salte").
+  final Set<String> deletedAlerts = {};
   bool isLoading = true;
   bool hasConnectionError = false;
   bool hasData = false;
@@ -207,32 +210,76 @@ class _AlertsScreenState extends State<AlertsScreen> {
     );
   }
 
-  // Avisos que guarda la Raspberry en nodes/{nodo}/alertas (semáforo, sonido, eventos)
+  // Avisos que guarda la Raspberry en nodes/{nodo}/alertas (semáforo, sonido, eventos).
+  // Solo se muestran los de los últimos 7 días y se borran deslizándolos.
   Widget buildNodeAlerts(String nodeId) {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: NodeService(nodeId).alertsStream(),
       builder: (context, snapshot) {
-        final items = snapshot.data ?? [];
+        final items = (snapshot.data ?? [])
+            .where((item) => !deletedAlerts.contains(item['id']))
+            .toList();
         if (items.isEmpty) {
           return Text(
-            "Todavía no hay avisos del nodo.",
+            "No hay avisos del nodo en los últimos 7 días.",
             style: MyTextStyles.bodySmall,
           );
         }
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              "Últimos 7 días · desliza un aviso a la derecha o a la izquierda para borrarlo.",
+              style: MyTextStyles.bodySmall,
+            ),
+            SizedBox(height: 8),
             for (final item in items)
-              AlertCard(
-                severity: item['semaforo'] == 3 ? 'critical' : 'warning',
-                title: "Aviso del nodo",
-                body: item['texto']?.toString() ?? "",
-                time: item['creada'] is Timestamp
-                    ? formatTime((item['creada'] as Timestamp).toDate())
-                    : "",
+              Dismissible(
+                key: ValueKey(item['id']),
+                direction: DismissDirection.horizontal,
+                background: buildDeleteBackground(Alignment.centerLeft),
+                secondaryBackground: buildDeleteBackground(Alignment.centerRight),
+                onDismissed: (_) => deleteNodeAlert(nodeId, item['id'] as String),
+                child: AlertCard(
+                  severity: item['semaforo'] == 3 ? 'critical' : 'warning',
+                  title: "Aviso del nodo",
+                  body: item['texto']?.toString() ?? "",
+                  time: item['creada'] is Timestamp
+                      ? formatTime((item['creada'] as Timestamp).toDate())
+                      : "",
+                ),
               ),
           ],
         );
       },
+    );
+  }
+
+  Future<void> deleteNodeAlert(String nodeId, String id) async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => deletedAlerts.add(id));
+    try {
+      await NodeService(nodeId).deleteAlert(id);
+      messenger.showSnackBar(const SnackBar(content: Text("Aviso borrado")));
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => deletedAlerts.remove(id));
+      messenger.showSnackBar(const SnackBar(
+        content: Text("No se pudo borrar el aviso. Revisa tu conexión."),
+      ));
+    }
+  }
+
+  Widget buildDeleteBackground(Alignment alignment) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      alignment: alignment,
+      decoration: BoxDecoration(
+        color: Colors.red.shade400,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Icon(Icons.delete_outline, color: Colors.white),
     );
   }
 
